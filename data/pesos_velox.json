@@ -1,0 +1,55 @@
+{
+  "GERENTE": {
+    "total": 1500,
+    "metas": {
+      "Produção": 0.40,
+      "Vistorias de 190,00": 0.20,
+      "Pesquisa de Satisfação": 0.10,
+      "Liderança & Organização": 0.05,
+      "Recursos Humanos": 0.05,
+      "Qualidade": 0.20
+    }
+  },
+  "SUPERVISOR": {
+    "total": 800,
+    "metas": {
+      "Produção": 0.40,
+      "Vistorias de 190,00": 0.20,
+      "Pesquisa de Satisfação": 0.10,
+      "Liderança & Organização": 0.05,
+      "Recursos Humanos": 0.05,
+      "Qualidade": 0.20
+    }
+  },
+  "VISTORIADOR": {
+    "total": 400,
+    "metas": {
+      "Produção": 0.50,
+      "Vistorias de 190,00": 0.20,
+      "Qualidade": 0.20,
+      "Treinamento": 0.05,
+      "Adesão Pesquisa de Clima": 0.05
+    }
+  },
+  "ATENDENTE": {
+    "total": 350,
+    "metas": {
+      "Produção": 0.15,
+      "Vistorias de 190,00": 0.40,
+      "Pesquisa de Satisfação": 0.20,
+      "Organização da Loja": 0.15,
+      "Treinamento": 0.05,
+      "Adesão Pesquisa de Clima": 0.05
+    }
+  },
+  "SERV GERAIS": {
+    "total": 350,
+    "metas": {
+      "Organização da Loja": 0.80,
+      "Treinamento": 0.10,
+      "Adesão Pesquisa de Clima": 0.10
+    }
+  },
+  "_funcoes_excluidas": ["ANALISTA", "SUPERVISOR ANÁLISE"]
+
+}

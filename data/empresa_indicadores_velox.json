@@ -1,0 +1,83 @@
+{
+  "JANEIRO": {
+    "financeiro": true,
+    "qualidade": true,
+    "organizacao_da_loja": true,
+    "Liderança & Organização": true,
+    "producao_por_cidade": {
+      "SÃO LUIS": false,
+      "IMPERATRIZ": false,
+      "PEDREIRAS": false,
+      "GRAJAÚ": false,
+      "ESTREITO": true
+    },
+    "qualidade_total_por_cidade": {
+      "ESTREITO": 0.114,
+      "GRAJAÚ": 0.088,
+      "PEDREIRAS": 0.069,
+      "IMPERATRIZ": 0.031,
+      "SÃO LUIS": 0.045
+    },
+    "qualidade_gg_por_cidade": {
+      "ESTREITO": 0.059,
+      "GRAJAÚ": 0.036,
+      "PEDREIRAS": 0.036,
+      "IMPERATRIZ": 0.017,
+      "SÃO LUIS": 0.023
+    }
+  },
+  "FEVEREIRO": {
+    "financeiro": true,
+    "qualidade": true,
+    "organizacao_da_loja": true,
+    "Liderança & Organização": true,
+    "producao_por_cidade": {
+      "SÃO LUIS": true,
+      "IMPERATRIZ": false,
+      "PEDREIRAS": false,
+      "GRAJAÚ": false,
+      "ESTREITO": true
+    },
+    "qualidade_total_por_cidade": {
+      "ESTREITO": 0.069,
+      "GRAJAÚ": 0.038,
+      "PEDREIRAS": 0.046,
+      "IMPERATRIZ": 0.028,
+      "SÃO LUIS": 0.042
+    },
+    "qualidade_gg_por_cidade": {
+      "ESTREITO": 0.042,
+      "GRAJAÚ": 0.018,
+      "PEDREIRAS": 0.018,
+      "IMPERATRIZ": 0.013,
+      "SÃO LUIS": 0.023
+    }
+  },
+  "MARÇO": {
+    "financeiro": true,
+    "qualidade": true,
+    "organizacao_da_loja": true,
+    "Liderança & Organização": true,
+    "producao_por_cidade": {
+      "SÃO LUIS": true,
+      "IMPERATRIZ": true,
+      "PEDREIRAS": true,
+      "GRAJAÚ": true,
+      "ESTREITO": true
+    },
+    "qualidade_total_por_cidade": {
+      "ESTREITO": 0.035,
+      "GRAJAÚ": 0.035,
+      "PEDREIRAS": 0.035,
+      "IMPERATRIZ": 0.035,
+      "SÃO LUIS": 0.035
+    },
+    "qualidade_gg_por_cidade": {
+      "ESTREITO": 0.015,
+      "GRAJAÚ": 0.015,
+      "PEDREIRAS": 0.015,
+      "IMPERATRIZ": 0.015,
+      "SÃO LUIS": 0.015
+    }
+  }
+}
