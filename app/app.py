@@ -10,11 +10,6 @@ st.set_page_config(page_title="Painel de Bônus - VELOX", layout="wide")
 st.title("🚀 Painel de Bônus Trimestral - VELOX")
 
 # ===================== PATHS (CORRIGIDO) =====================
-# Seu repo está assim:
-# /app/app.py
-# /data/pesos_velox.json
-# /data/empresa_indicadores_velox.json
-# /data/RESUMO PARA PAINEL - VELOX.xlsx
 BASE_DIR = Path(__file__).resolve().parent  # .../app
 CANDIDATOS_DATA = [BASE_DIR / "data", BASE_DIR.parent / "data", BASE_DIR]
 
@@ -74,10 +69,34 @@ def is_producao_item(item: str) -> bool:
     k = up(item)
     return ("PRODU" in k) or k.startswith("PRD") or k.startswith("PROD")
 
-# ===================== PARÂMETROS (QUALIDADE GESTÃO) =====================
+# ===================== PARÂMETROS (QUALIDADE) =====================
+# Gestão (Supervisor/Gerente): por cidade (proporção)
 QUALIDADE_GESTAO_METODO = "por_cidade"
 META_ERROS_TOTAIS_GESTAO = 0.035  # 3,5%
 META_ERROS_GG_GESTAO = 0.015      # 1,5%
+
+# Vistoriador: regra direta da planilha (ERROS TOTAL e ERROS GG)
+META_ERROS_TOTAIS_VIST = 0.035
+META_ERROS_GG_VIST = 0.015
+
+def pct_qualidade_vistoriador(et_frac: float, eg_frac: float) -> float:
+    """
+    Retorna 1.0, 0.5 ou 0.0 para o item Qualidade do Vistoriador:
+    - 1.0 se bate Totais e GG
+    - 0.5 se bate apenas um
+    - 0.0 se não bate nenhum
+    """
+    et = 0.0 if pd.isna(et_frac) else float(et_frac)
+    eg = 0.0 if pd.isna(eg_frac) else float(eg_frac)
+
+    total_ok = et <= META_ERROS_TOTAIS_VIST
+    gg_ok = eg <= META_ERROS_GG_VIST
+
+    if total_ok and gg_ok:
+        return 1.0
+    if (total_ok and (not gg_ok)) or ((not total_ok) and gg_ok):
+        return 0.5
+    return 0.0
 
 # ===================== RESPONSABILIDADE (CIDADES) =====================
 _SUPERVISORES_CIDADES_RAW = {
@@ -120,7 +139,7 @@ except Exception as e:
 FUNCOES_EXCLUIDAS = set(up(x) for x in PESOS.get("_funcoes_excluidas", []))
 
 MESES = ["TRIMESTRE", "JANEIRO", "FEVEREIRO", "MARÇO"]
-filtro_mes = st.radio("📅 Selecione o mês:", MESES, horizontal=True)
+filtro_mes = st.radio("Selecione o mês:", MESES, horizontal=True)
 
 def ler_planilha(mes: str) -> pd.DataFrame:
     base = pick_path("RESUMO PARA PAINEL - VELOX.xlsx")
@@ -142,7 +161,6 @@ def calc_qualidade_gestao_por_cidade(
     if not cidades_total and not cidades_gg:
         return 0.0, 0.0, ["Qualidade (gestão) — sem dados por cidade no JSON do mês"]
 
-    # Erros Totais
     if cidades_total:
         ok_total = [c for c in cidades_total if float(total_por_cidade[c]) <= meta_total]
         nok_total = [c for c in cidades_total if c not in ok_total]
@@ -153,7 +171,6 @@ def calc_qualidade_gestao_por_cidade(
         frac_total = 0.0
         detalhes.append("Qualidade — Erros Totais: sem dados por cidade")
 
-    # Erros GG
     if cidades_gg:
         ok_gg = [c for c in cidades_gg if float(gg_por_cidade[c]) <= meta_gg]
         nok_gg = [c for c in cidades_gg if c not in ok_gg]
@@ -253,6 +270,30 @@ def calcula_mes(df_mes: pd.DataFrame, nome_mes: str) -> pd.DataFrame:
 
             # ------------------- QUALIDADE -------------------
             if item_norm == up("QUALIDADE"):
+                # VISTORIADOR: usa ERROS TOTAL e ERROS GG da planilha
+                if func == up("VISTORIADOR"):
+                    et_frac = pct_safe(row.get("ERROS TOTAL", 0))
+                    eg_frac = pct_safe(row.get("ERROS GG", 0))
+                    frac = pct_qualidade_vistoriador(et_frac, eg_frac)
+
+                    if frac == 1.0:
+                        recebido += parcela
+                    elif frac == 0.5:
+                        recebido += parcela * 0.5
+                        perdas += parcela * 0.5
+                        perdeu_itens.append(
+                            f"Qualidade (50%) — total {fmt_pct(et_frac)} | gg {fmt_pct(eg_frac)} "
+                            f"(meta {fmt_pct(META_ERROS_TOTAIS_VIST)} / {fmt_pct(META_ERROS_GG_VIST)})"
+                        )
+                    else:
+                        perdas += parcela
+                        perdeu_itens.append(
+                            f"Qualidade (0%) — total {fmt_pct(et_frac)} | gg {fmt_pct(eg_frac)} "
+                            f"(meta {fmt_pct(META_ERROS_TOTAIS_VIST)} / {fmt_pct(META_ERROS_GG_VIST)})"
+                        )
+                    continue
+
+                # Supervisor/Gerente: por cidade via JSON
                 if func in [up("SUPERVISOR"), up("GERENTE")] and nome in RESP_CIDADES:
                     cidades_resp = list(RESP_CIDADES[nome].keys())
                     frac_total, frac_gg, detalhes = calc_qualidade_gestao_por_cidade(
@@ -264,7 +305,6 @@ def calcula_mes(df_mes: pd.DataFrame, nome_mes: str) -> pd.DataFrame:
                     metade = parcela * 0.5
                     recebido += metade * float(frac_total)
                     perdas += metade * (1.0 - float(frac_total))
-
                     recebido += metade * float(frac_gg)
                     perdas += metade * (1.0 - float(frac_gg))
 
@@ -273,6 +313,7 @@ def calcula_mes(df_mes: pd.DataFrame, nome_mes: str) -> pd.DataFrame:
                         perdeu_itens.extend(detalhes)
                     continue
 
+                # fallback: empresa-wide
                 if flag("qualidade", True):
                     recebido += parcela
                 else:
@@ -321,7 +362,7 @@ def calcula_mes(df_mes: pd.DataFrame, nome_mes: str) -> pd.DataFrame:
 if filtro_mes == "TRIMESTRE":
     try:
         df_jan, df_fev, df_mar = [ler_planilha(m) for m in ["JANEIRO", "FEVEREIRO", "MARÇO"]]
-        st.success("✅ Planilhas carregadas: JANEIRO, FEVEREIRO e MARÇO!")
+        st.success("Planilhas carregadas: JANEIRO, FEVEREIRO e MARÇO")
     except Exception as e:
         st.error(f"Erro ao ler a planilha: {e}")
         st.stop()
@@ -364,7 +405,7 @@ if filtro_mes == "TRIMESTRE":
 else:
     try:
         df_mes = ler_planilha(filtro_mes)
-        st.success(f"✅ Planilha de {filtro_mes} carregada!")
+        st.success(f"Planilha de {filtro_mes} carregada")
     except Exception as e:
         st.error(f"Erro ao ler a planilha: {e}")
         st.stop()
@@ -375,7 +416,7 @@ else:
     )
 
 # ===================== FILTROS =====================
-st.markdown("### 🔎 Filtros")
+st.markdown("### Filtros")
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -405,17 +446,17 @@ if filtro_tempo != "Todos" and "TEMPO DE CASA" in dados_view.columns:
     dados_view = dados_view[dados_view["TEMPO DE CASA"] == filtro_tempo]
 
 # ===================== RESUMO =====================
-st.markdown("### 📊 Resumo Geral")
+st.markdown("### Resumo Geral")
 colA, colB, colC = st.columns(3)
 with colA:
-    st.success(f"💰 Total possível: R$ {dados_view['META'].sum():,.2f}")
+    st.success(f"Total possível: R$ {dados_view['META'].sum():,.2f}")
 with colB:
-    st.info(f"📈 Recebido: R$ {dados_view['RECEBIDO'].sum():,.2f}")
+    st.info(f"Recebido: R$ {dados_view['RECEBIDO'].sum():,.2f}")
 with colC:
-    st.error(f"📉 Deixou de ganhar: R$ {dados_view['PERDA'].sum():,.2f}")
+    st.error(f"Deixou de ganhar: R$ {dados_view['PERDA'].sum():,.2f}")
 
 # ===================== CARDS =====================
-st.markdown("### 👥 Colaboradores")
+st.markdown("### Colaboradores")
 cols = st.columns(3)
 dados_view = dados_view.sort_values(by="%", ascending=False)
 
@@ -448,8 +489,8 @@ for idx, row in dados_view.iterrows():
         """, unsafe_allow_html=True)
 
         if badge:
-            st.caption(f"⚠️ {badge}")
+            st.caption(f"{badge}")
         if obs_txt:
-            st.caption(f"🗒️ {obs_txt}")
+            st.caption(f"{obs_txt}")
         if perdidos_txt and "100%" not in perdidos_txt:
-            st.caption(f"🔻 Indicadores não entregues: {perdidos_txt}")
+            st.caption(f"Indicadores não entregues: {perdidos_txt}")
